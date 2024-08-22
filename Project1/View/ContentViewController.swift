@@ -1,15 +1,13 @@
-
-
 import UIKit
 
+enum MenuState {
+    case open, closed
+}
+
+
+
 class ContentViewController: UIViewController{
-    
-    
-    enum MenuState {
-        case open, closed
-    }
-    
-    private var menuState: MenuState = .closed
+    public var menuState: MenuState = .closed
     let menuVC = MenuViewController()
     let homeVC = HomeViewController()
     lazy var favouriteVC = FavouriteViewController()
@@ -17,20 +15,16 @@ class ContentViewController: UIViewController{
     var naviVC: UINavigationController?
     
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        view.backgroundColor = .red
+        menuVC.switchDelegate = homeVC
+//        menuVC.switchDelegate = favouriteVC
         addChildView()
+        menuVC.menuClosed = self
     }
     
-    
-    
-    
-    
+      
     func addChildView() {
-        
         // home
         homeVC.delegate = self
         let naviVC = UINavigationController(rootViewController: homeVC)
@@ -39,58 +33,59 @@ class ContentViewController: UIViewController{
         naviVC.didMove(toParent: self)
         self.naviVC = naviVC
         self.resertVC = homeVC
-        
         // menu
         menuVC.deleagte = self
         addChild(menuVC)
         view.addSubview(menuVC.view)
         menuVC.didMove(toParent: self)
-        
-       
-        self.menuVC.view.isHidden = true
+
+        self.menuVC.view.frame = CGRect(x: -self.view.frame.width, y: 0, width: self.view.frame.width, height: self.view.frame.height)
     }
 }
 
 
-
 extension ContentViewController: HomeDelegate {
     func clickMenu() {
-        // animate the menu
+        // animate the menu CLOSE/OPEN
         switch menuState {
         case .closed:
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseInOut) {
-//                self.naviVC?.view.frame.origin.x = self.homeVC.view.frame.width - 100
-                self.menuVC.view.isHidden = false
+            UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseInOut) {
+                // create alpha when Menu opening
+                self.menuVC.view.frame = CGRect(x: 0, y: 0, width: self.view.frame.width , height: self.view.bounds.height)
             } completion: { done in
                 if done {
+                    self.menuVC.view.backgroundColor = colorAlpha(color: .black, number: 0.5)
+                    self.menuVC.view.layer.zPosition = CGFloat(Float.greatestFiniteMagnitude)
                     self.menuState = .open
                 }
             }
-    
-
             
         case .open:
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseInOut) {
-//                self.naviVC?.view.frame.origin.x = 0
-                self.menuVC.view.isHidden = true
+            UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseInOut) {
+                self.menuVC.view.frame = CGRect(x: -self.view.bounds.width, y: 0, width: self.view.bounds.width , height: self.view.bounds.height)
             } completion: { done in
                 if done {
                     self.menuState = .closed
                 }
             }
-            
         }
     }
-    
 }
+
+
+
+extension ContentViewController: MenuViewControllerDelegate {
+    func didTapCloseButton() {
+        clickMenu()
+    }
+}
+
 
 
 extension ContentViewController : MenuDelegate {
     func didSelectVC(menuItem: MenuViewController.MenuOption) {
         clickMenu()
-        
         switch menuItem {
-            
         case .darkMode:
             break
         case .home:
@@ -112,13 +107,9 @@ extension ContentViewController : MenuDelegate {
     }
     
     
- 
-    
     
     func switchToViewController(_ newVC: UIViewController) {
-        
         guard let resertVC = resertVC else { return }
-        
         if newVC != homeVC {
             homeVC.addChild(favouriteVC)
             homeVC.view.addSubview(newVC.view)
@@ -131,9 +122,9 @@ extension ContentViewController : MenuDelegate {
             }
             resertVC.view.removeFromSuperview()
             resertVC.didMove(toParent: nil)
-            homeVC.title = "Home"
+            homeVC.title = "Anime Quotes"
+//            didChangeSwitch(isOn: true)
         }
         self.resertVC = newVC
-    
     }
 }
